@@ -3,60 +3,189 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Interface Neural Gemini 3.1</title>
+    <title>IA 2026 - Interface Neural</title>
     <style>
-        :root { --neon-blue: #00f3ff; --bg-dark: #0a0a0a; }
-        body { background: var(--bg-dark); color: white; font-family: 'Courier New', monospace; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; }
-        .terminal { width: 90%; max-width: 600px; height: 80vh; background: #111; border: 1px solid var(--neon-blue); box-shadow: 0 0 15px var(--neon-blue); display: flex; flex-direction: column; border-radius: 8px; }
-        .header { background: var(--neon-blue); color: black; padding: 5px 15px; font-weight: bold; font-size: 12px; }
-        #chat { flex: 1; overflow-y: auto; padding: 20px; scrollbar-width: thin; }
-        .input-line { display: flex; border-top: 1px solid #333; padding: 10px; background: #000; }
-        input { flex: 1; background: transparent; border: none; color: var(--neon-blue); outline: none; font-size: 16px; }
-        .bot-msg { color: var(--neon-blue); margin-bottom: 15px; line-height: 1.4; }
-        .user-msg { color: #fff; opacity: 0.7; margin-bottom: 15px; }
-        .cursor { display: inline-block; width: 10px; height: 18px; background: var(--neon-blue); animation: blink 1s infinite; }
-        @keyframes blink { 50% { opacity: 0; } }
+        :root {
+            --neon-blue: #00f3ff;
+            --bg-dark: #0a0a0a;
+            --panel-bg: #111;
+            --user-bubble: #222;
+            --bot-bubble: #003a3d;
+        }
+
+        body {
+            background-color: var(--bg-dark);
+            color: white;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+        }
+
+        .chat-container {
+            width: 400px;
+            height: 600px;
+            background: var(--panel-bg);
+            border: 1px solid var(--neon-blue);
+            box-shadow: 0 0 20px rgba(0, 243, 255, 0.2);
+            border-radius: 15px;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .chat-header {
+            background: var(--neon-blue);
+            color: black;
+            padding: 15px;
+            text-align: center;
+            font-weight: bold;
+            letter-spacing: 2px;
+            font-size: 0.9em;
+        }
+
+        #historico {
+            flex: 1;
+            padding: 20px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            scrollbar-width: thin;
+            scrollbar-color: var(--neon-blue) transparent;
+        }
+
+        .mensagem {
+            max-width: 80%;
+            padding: 12px;
+            border-radius: 10px;
+            font-size: 14px;
+            line-height: 1.4;
+        }
+
+        .user {
+            align-self: flex-end;
+            background: var(--user-bubble);
+            border-right: 3px solid var(--neon-blue);
+            color: #fff;
+        }
+
+        .bot {
+            align-self: flex-start;
+            background: var(--bot-bubble);
+            border-left: 3px solid var(--neon-blue);
+            color: var(--neon-blue);
+        }
+
+        .input-area {
+            padding: 20px;
+            background: #000;
+            display: flex;
+            gap: 10px;
+            border-top: 1px solid #333;
+        }
+
+        input {
+            flex: 1;
+            background: #1a1a1a;
+            border: 1px solid #333;
+            color: var(--neon-blue);
+            padding: 12px;
+            border-radius: 5px;
+            outline: none;
+        }
+
+        button {
+            background: var(--neon-blue);
+            color: black;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 5px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: 0.3s;
+        }
+
+        button:hover {
+            box-shadow: 0 0 15px var(--neon-blue);
+        }
+
+        button:disabled {
+            background: #444;
+            cursor: not-allowed;
+        }
     </style>
 </head>
 <body>
 
-<div class="terminal">
-    <div class="header">TERMINAL_V3.1_FLASH_LITE - STATUS: ONLINE</div>
-    <div id="chat">
-        <div class="bot-msg">Sistemas inicializados. O que você deseja processar hoje, humano?</div>
+<div class="chat-container">
+    <div class="chat-header">LINK NEURAL v3.1 - ONLINE</div>
+    
+    <div id="historico">
+        <div class="mensagem bot">Conexão estabelecida. O que você deseja processar em 2026?</div>
     </div>
-    <div class="input-line">
-        <span style="color:var(--neon-blue); margin-right:10px;">></span>
-        <input type="text" id="userInput" placeholder="Digite seu comando..." autofocus>
-        <span class="cursor"></span>
+
+    <div class="input-area">
+        <input type="text" id="pergunta" placeholder="Digite seu comando..." onkeypress="handleKey(event)">
+        <button id="btn-enviar" onclick="enviarMensagem()">ENVIAR</button>
     </div>
 </div>
 
 <script>
-    const input = document.getElementById('userInput');
-    const chat = document.getElementById('chat');
+    // 🚨 AQUI ESTÁ O SEGREDO: 
+    // Substitua o link abaixo pela URL que o RENDER te deu!
+    const URL_BACKEND = "https://teste-1mkl.onrender.com/";
 
-    input.addEventListener('keypress', async (e) => {
-        if (e.key === 'Enter' && input.value) {
-            const msg = input.value;
-            input.value = '';
-            
-            chat.innerHTML += `<div class="user-msg">USER@ROOT: ${msg}</div>`;
+    async function enviarMensagem() {
+        const input = document.getElementById("pergunta");
+        const historico = document.getElementById("historico");
+        const btn = document.getElementById("btn-enviar");
+        const texto = input.value;
 
-            try {
-                const res = await fetch('/perguntar', {
-                    method: 'POST',
-                    headers: {'Content-Type': 'application/json'},
-                    body: JSON.stringify({ mensagem: msg })
-                });
-                const data = await res.json();
-                chat.innerHTML += `<div class="bot-msg">AI_AGENT: ${data.resposta}</div>`;
-                chat.scrollTop = chat.scrollHeight;
-            } catch (err) {
-                chat.innerHTML += `<div class="bot-msg" style="color:red">ERROR: Falha na uplink neural.</div>`;
-            }
+        if (!texto) return;
+
+        // 1. Limpa o input e trava o botão
+        input.value = "";
+        btn.disabled = true;
+
+        // 2. Adiciona mensagem do usuário na tela
+        historico.innerHTML += `<div class="mensagem user">${texto}</div>`;
+        
+        // 3. Adiciona balão de "Pensando..."
+        const loadingId = "load-" + Date.now();
+        historico.innerHTML += `<div class="mensagem bot" id="${loadingId}">Processando payload...</div>`;
+        
+        // Scroll para o final
+        historico.scrollTop = historico.scrollHeight;
+
+        try {
+            // 4. Faz a requisição para o seu Back-end no RENDER
+            const resposta = await fetch(URL_BACKEND, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ pergunta: texto })
+            });
+
+            const dados = await resposta.json();
+
+            // 5. Substitui o loading pela resposta real da IA
+            document.getElementById(loadingId).innerText = dados.resposta;
+
+        } catch (erro) {
+            document.getElementById(loadingId).innerText = "❌ ERRO: Falha na conexão com a rede neural no Render.";
+        } finally {
+            btn.disabled = false;
+            historico.scrollTop = historico.scrollHeight;
         }
-    });
+    }
+
+    // Permite enviar com a tecla ENTER
+    function handleKey(e) {
+        if (e.key === 'Enter') enviarMensagem();
+    }
 </script>
+
 </body>
 </html>

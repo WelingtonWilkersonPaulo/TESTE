@@ -1,84 +1,62 @@
-// 1. IMPORTAÇÕES E CONFIGURAÇÕES
+// 1. IMPORTAÇÕES
 require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
 const { GoogleGenerativeAI } = require("@google/generative-ai");
 
 const app = express();
-const PORTA = 3000;
 
 // 2. MIDDLEWARES (Configurações do Servidor)
-app.use(express.json()); // Essencial para entender o JSON que o Insomnia/Front envia
-app.use(cors());         // Permite conexões externas
+app.use(cors()); // Permite que o Front-end (Vercel/GitHub Pages) acesse esta API
+app.use(express.json()); // Permite ler o corpo das requisições em JSON
+app.use(express.static('public')); // Opcional: Serve o front se ele estiver na mesma pasta
 
-// --- IMPORTANTE: SERVIR O FRONT-END ---
-// Esta linha faz com que os arquivos dentro da pasta "public" (index.html, etc) 
-// apareçam quando você acessar http://localhost:3000
-app.use(express.static('public')); 
-
-// 3. CONFIGURAÇÃO DA IA (GEMINI 3.1 FLASH-LITE)
+// 3. CONFIGURAÇÃO DA IA DO GOOGLE
+// No Render, você vai cadastrar essa chave nas "Environment Variables"
 const apiKey = process.env.GEMINI_API_KEY;
-if (!apiKey) {
-    console.error("❌ ERRO: Chave da API não encontrada no arquivo .env");
-    process.exit(1);
-}
 const genAI = new GoogleGenerativeAI(apiKey);
 
-// 4. ROTA DE STATUS (DESAFIO EXTRA)
-// Teste no navegador: http://localhost:3000/api/status
+// 4. ROTA DE STATUS (Para testar se o servidor acordou)
 app.get('/api/status', (req, res) => {
-    res.status(200).json({
-        servico: "API Agente IA",
-        status: "Operacional",
-        modelo: "Gemini 3.1 Flash-Lite",
-        ano: 2026
+    res.json({ 
+        status: "Operacional", 
+        servidor: "Render Cloud",
+        modelo: "Gemini 1.5 Flash" 
     });
 });
 
-// 5. ROTA PRINCIPAL DE CHAT (POST)
-// Usada pelo Insomnia e pelo seu Front-end
+// 5. ROTA DE CHAT (POST)
 app.post('/api/chat', async (req, res) => {
     try {
         const { pergunta } = req.body;
 
-        // VALIDAÇÃO: Critério de Aceite (Status 400)
         if (!pergunta) {
-            return res.status(400).json({ 
-                erro: "Requisição inválida. O campo 'pergunta' é obrigatório no JSON." 
-            });
+            return res.status(400).json({ erro: "A pergunta é obrigatória." });
         }
 
-        console.log(`📩 Processando payload: "${pergunta}"`);
+        // Escolha do modelo
+        const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
 
-        // Instancia o modelo de 2026
-        const model = genAI.getGenerativeModel({ model: "gemini-3.1-flash-lite" });
-        
-        // Engenharia de Prompt: Persona Dev Sênior Sarcástico
-        const promptFinal = `Aja como um desenvolvedor sênior de software do ano de 2026, extremamente sarcástico, técnico e que usa gírias como Web4, Edge e Handshake. Responda de forma curta à seguinte dúvida: ${pergunta}`;
-        
+        // Engenharia de Prompt (Personalidade Sarcástica de 2026)
+        const promptFinal = `Aja como um desenvolvedor sênior sarcástico de 2026. 
+        Responda de forma curta e técnica, usando termos como Web4 e Edge Computing. 
+        Pergunta: ${pergunta}`;
+
         const result = await model.generateContent(promptFinal);
         const respostaDaIA = result.response.text();
 
-        // RESPOSTA DE SUCESSO (Status 200)
-        return res.status(200).json({ 
-            sucesso: true,
-            resposta: respostaDaIA 
-        });
+        // Retorna a resposta para o Front-end
+        res.json({ resposta: respostaDaIA });
 
-    } catch (erro) {
-        console.error("❌ ERRO NO SERVIDOR:", erro.message);
-        return res.status(500).json({ 
-            erro: "Falha catastrófica no núcleo de processamento neural.",
-            detalhes: erro.message 
-        });
+    } catch (error) {
+        console.error("Erro no servidor:", error);
+        res.status(500).json({ erro: "Erro interno no servidor de IA." });
     }
 });
 
-// 6. INICIALIZAÇÃO DO SERVIDOR
+// 6. INICIALIZAÇÃO DINÂMICA (ESSENCIAL PARA O RENDER)
+// O Render define a porta automaticamente. Se não houver (local), usa 3000.
+const PORTA = process.env.PORT || 3000;
 app.listen(PORTA, () => {
-    console.log(`\n🚀 SERVIDOR 2026 RODANDO!`);
-    console.log(`🏠 Front-end: http://localhost:${PORTA}`);
-    console.log(`📊 Status:    http://localhost:${PORTA}/api/status`);
-    console.log(`💬 Chat API:  POST http://localhost:${PORTA}/api/chat`);
-    console.log(`\nLembre-se: O tempo de CPU é caro. Faça perguntas inteligentes. ☕\n`);
+    console.log(`🚀 Servidor decolando na porta ${PORTA}`);
 });
