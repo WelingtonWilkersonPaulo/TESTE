@@ -15,7 +15,7 @@ const genAI = new GoogleGenerativeAI(apiKey);
 app.get('/api/status', (req, res) => {
     res.json({ 
         status: "Operacional", 
-        modelo: "Gemini 2.0 Flash",
+        modelo: "Gemini 3.0 Flash",
         versao: "2026.02.v3" 
     });
 });
@@ -29,7 +29,7 @@ app.post('/api/chat', async (req, res) => {
         }
 
         // --- MODELO MAIS RECENTE (GEMINI 2.0 FLASH) ---
-        const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
+        const model = genAI.getGenerativeModel({ model: "gemini-3-flash-preview" });
 
         const promptFinal = `Aja como um Engenheiro de Software Sênior de 2026. 
         Responda de forma curta, técnica e sarcástica. 
