@@ -169,9 +169,8 @@
             });
 
             const dados = await resposta.json();
-
-            // 5. Substitui o loading pela resposta real da IA
-            document.getElementById(loadingId).innerText = dados.resposta;
+console.log(dados); // ADICIONE ISSO PARA VER O ERRO NO F12
+document.getElementById(loadingId).innerText = dados.resposta;
 
         } catch (erro) {
             document.getElementById(loadingId).innerText = "❌ ERRO: Falha na conexão com a rede neural no Render.";
