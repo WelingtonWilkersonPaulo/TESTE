@@ -2,189 +2,84 @@
 <html lang="pt-br">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>IA 2026 - Interface Neural</title>
+    <title>IA 2026 - Mestre do Jogo</title>
     <style>
-        :root {
-            --neon-blue: #00f3ff;
-            --bg-dark: #0a0a0a;
-            --panel-bg: #111;
-            --user-bubble: #222;
-            --bot-bubble: #003a3d;
-        }
-
-        body {
-            background-color: var(--bg-dark);
-            color: white;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
-            margin: 0;
-        }
-
-        .chat-container {
-            width: 400px;
-            height: 600px;
-            background: var(--panel-bg);
-            border: 1px solid var(--neon-blue);
-            box-shadow: 0 0 20px rgba(0, 243, 255, 0.2);
-            border-radius: 15px;
-            display: flex;
-            flex-direction: column;
-            overflow: hidden;
-        }
-
-        .chat-header {
-            background: var(--neon-blue);
-            color: black;
-            padding: 15px;
-            text-align: center;
-            font-weight: bold;
-            letter-spacing: 2px;
-            font-size: 0.9em;
-        }
-
-        #historico {
-            flex: 1;
-            padding: 20px;
-            overflow-y: auto;
-            display: flex;
-            flex-direction: column;
-            gap: 15px;
-            scrollbar-width: thin;
-            scrollbar-color: var(--neon-blue) transparent;
-        }
-
-        .mensagem {
-            max-width: 80%;
-            padding: 12px;
-            border-radius: 10px;
-            font-size: 14px;
-            line-height: 1.4;
-        }
-
-        .user {
-            align-self: flex-end;
-            background: var(--user-bubble);
-            border-right: 3px solid var(--neon-blue);
-            color: #fff;
-        }
-
-        .bot {
-            align-self: flex-start;
-            background: var(--bot-bubble);
-            border-left: 3px solid var(--neon-blue);
-            color: var(--neon-blue);
-        }
-
-        .input-area {
-            padding: 20px;
-            background: #000;
-            display: flex;
-            gap: 10px;
-            border-top: 1px solid #333;
-        }
-
-        input {
-            flex: 1;
-            background: #1a1a1a;
-            border: 1px solid #333;
-            color: var(--neon-blue);
-            padding: 12px;
-            border-radius: 5px;
-            outline: none;
-        }
-
-        button {
-            background: var(--neon-blue);
-            color: black;
-            border: none;
-            padding: 10px 15px;
-            border-radius: 5px;
-            font-weight: bold;
-            cursor: pointer;
-            transition: 0.3s;
-        }
-
-        button:hover {
-            box-shadow: 0 0 15px var(--neon-blue);
-        }
-
-        button:disabled {
-            background: #444;
-            cursor: not-allowed;
-        }
+        /* Mantenha seu estilo Cyberpunk anterior e adicione: */
+        .ranking-panel { display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: #111; border: 2px solid #00f3ff; padding: 20px; z-index: 100; border-radius: 10px; width: 300px; }
+        .nickname-area { padding: 10px; border-bottom: 1px solid #333; margin-bottom: 10px; }
+        .gold { color: gold; font-weight: bold; }
     </style>
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
 </head>
 <body>
 
 <div class="chat-container">
-    <div class="chat-header">LINK NEURAL v3.1 - ONLINE</div>
-    
-    <div id="historico">
-        <div class="mensagem bot">Conexão estabelecida. O que você deseja processar em 2026?</div>
+    <div class="nickname-area">
+        <input type="text" id="nickname" placeholder="Seu Nickname Gamer...">
+        <button onclick="document.querySelector('.ranking-panel').style.display='block'; carregarRanking()">🏆 Ranking</button>
     </div>
+    
+    <div id="historico"></div>
 
     <div class="input-area">
-        <input type="text" id="pergunta" placeholder="Digite seu comando..." onkeypress="handleKey(event)">
-        <button id="btn-enviar" onclick="enviarMensagem()">ENVIAR</button>
+        <input type="text" id="pergunta" placeholder="Mande sua resposta ou peça uma charada...">
+        <button onclick="enviarMensagem()">ENVIAR</button>
     </div>
 </div>
 
+<!-- Painel de Ranking -->
+<div class="ranking-panel">
+    <h3 style="color:#00f3ff">🏆 TOP 10 JOGADORES</h3>
+    <div id="lista-ranking"></div>
+    <button onclick="document.querySelector('.ranking-panel').style.display='none'" style="margin-top:10px">Fechar</button>
+</div>
+
 <script>
-    // 🚨 AQUI ESTÁ O SEGREDO: 
-    // Substitua o link abaixo pela URL que o RENDER te deu!
-    const URL_BACKEND = "https://teste-1mkl.onrender.com/api/chat";
+    const URL_BACKEND = "https://SEU-APP.onrender.com"; // AJUSTE AQUI
 
     async function enviarMensagem() {
         const input = document.getElementById("pergunta");
-        const historico = document.getElementById("historico");
-        const btn = document.getElementById("btn-enviar");
+        const nickInput = document.getElementById("nickname");
         const texto = input.value;
+        const nick = nickInput.value;
 
-        if (!texto) return;
+        if (!texto || !nick) return alert("Nickname e Pergunta são obrigatórios!");
 
-        // 1. Limpa o input e trava o botão
         input.value = "";
-        btn.disabled = true;
-
-        // 2. Adiciona mensagem do usuário na tela
-        historico.innerHTML += `<div class="mensagem user">${texto}</div>`;
-        
-        // 3. Adiciona balão de "Pensando..."
-        const loadingId = "load-" + Date.now();
-        historico.innerHTML += `<div class="mensagem bot" id="${loadingId}">Processando payload...</div>`;
-        
-        // Scroll para o final
-        historico.scrollTop = historico.scrollHeight;
+        const historico = document.getElementById("historico");
+        historico.innerHTML += `<div class="mensagem user"><b>${nick}:</b> ${texto}</div>`;
 
         try {
-            // 4. Faz a requisição para o seu Back-end no RENDER
-            const resposta = await fetch(URL_BACKEND, {
+            const res = await fetch(`${URL_BACKEND}/api/chat`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ pergunta: texto })
+                body: JSON.stringify({ pergunta: texto, nickname: nick })
             });
 
-            const dados = await resposta.json();
-console.log(dados); // ADICIONE ISSO PARA VER O ERRO NO F12
-document.getElementById(loadingId).innerText = dados.resposta;
+            const dados = await res.json();
+            
+            // Efeito Confete
+            if (dados.resposta.includes("Acertou") || dados.resposta.includes("Parabéns")) {
+                confetti({ particleCount: 100, spread: 70, origin: { y: 0.6 } });
+            }
 
-        } catch (erro) {
-            document.getElementById(loadingId).innerText = "❌ ERRO: Falha na conexão com a rede neural no Render.";
-        } finally {
-            btn.disabled = false;
+            historico.innerHTML += `<div class="mensagem bot"><b>Mestre:</b> ${dados.resposta}</div>`;
             historico.scrollTop = historico.scrollHeight;
-        }
+        } catch (e) { alert("Erro de conexão!"); }
     }
 
-    // Permite enviar com a tecla ENTER
-    function handleKey(e) {
-        if (e.key === 'Enter') enviarMensagem();
+    async function carregarRanking() {
+        const lista = document.getElementById("lista-ranking");
+        lista.innerHTML = "Carregando...";
+        const res = await fetch(`${URL_BACKEND}/api/ranking`);
+        const dados = await res.json();
+        
+        lista.innerHTML = dados.map((j, i) => `
+            <div style="margin-bottom:5px">
+                ${i === 0 ? '🥇' : i+1+'º'} ${j.nome} - <b>${j.xp} XP</b>
+            </div>
+        `).join('');
     }
 </script>
-
 </body>
 </html>
